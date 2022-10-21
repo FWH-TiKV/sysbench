@@ -208,6 +208,7 @@ typedef struct
   int             warmup_time;  /* warmup time */
   uint64_t        nevents CK_CC_CACHELINE; /* event counter */
   const char      *luajit_cmd; /* LuaJIT command */
+  unsigned int    bulk_row_size; /* The size of row in bulk insert */
 } sb_globals_t;
 
 extern sb_globals_t sb_globals CK_CC_CACHELINE;

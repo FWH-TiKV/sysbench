@@ -119,6 +119,7 @@ sb_arg_t general_args[] =
   SB_OPT("luajit-cmd", "perform LuaJIT control command. This option is "
          "equivalent to 'luajit -j'. See LuaJIT documentation for more "
          "information", NULL, STRING),
+  SB_OPT("bulk-row-size", "The row size of one bulk", NULL, INT),
 
   SB_OPT_END
 };
@@ -1430,6 +1431,8 @@ static int init(void)
 
   /* LuaJIT commands */
   sb_globals.luajit_cmd = sb_get_value_string("luajit-cmd");
+
+  sb_globals.bulk_row_size = sb_get_value_int("bulk-row-size");
 
   return 0;
 }

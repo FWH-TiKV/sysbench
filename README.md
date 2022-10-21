@@ -173,20 +173,28 @@ Assuming you have Xcode (or Xcode Command Line Tools) and Homebrew installed:
     # For PostgreSQL support
     brew install postgresql
     # openssl is not linked by Homebrew, this is to avoid "ld: library not found for -lssl"
+    export MACOSX_DEPLOYMENT_TARGET=10.14
     export LDFLAGS=-L/usr/local/opt/openssl/lib 
+    export LIBRARY_PATH=/usr/local/opt/openssl/lib
 ```
 
 ## Build and Install
 ``` shell
     ./autogen.sh
     # Add --with-pgsql to build with PostgreSQL support
-    ./configure
+    ./configure --with-pgsql
     make -j
     make install
+    sysbench oltp_insert prepare --db-driver=mysql --mysql-db=dbtest --mysql-host=localhost --mysql-port=3306 --mysql-user=root --mysql-password=root --tables=1 --table-size=100 --time=360 --report-interval=2 --threads=5 --bulk-row-size=100 --auto-inc=on
+    sysbench oltp_insert run --db-driver=mysql --mysql-db=dbtest --mysql-host=localhost --mysql-port=3306 --mysql-user=root --mysql-password=root --tables=1 --table-size=100 --time=360 --report-interval=2 --threads=5 --bulk-row-size=100 --auto-inc=on
+    sysbench oltp_insert_bulk prepare --db-driver=mysql --mysql-db=dbtest --mysql-host=localhost --mysql-port=3306 --mysql-user=root --mysql-password=root --tables=1 --table-size=100 --time=360 --report-interval=2 --threads=5 --bulk-row-size=100 --auto-inc=off
+    sysbench oltp_insert_bulk run --db-driver=mysql --mysql-db=dbtest --mysql-host=localhost --mysql-port=3306 --mysql-user=root --mysql-password=root --tables=1 --table-size=100 --time=360 --report-interval=2 --threads=5 --bulk-row-size=100 --auto-inc=off
+    sysbench oltp_insert_bulk prepare --db-driver=mysql --mysql-db=dbtest --mysql-host=127.0.0.1 --mysql-port=4000 --mysql-user=root --tables=1 --table-size=10000 --time=360 --report-interval=2 --threads=5 --bulk-row-size=100  --auto-inc=off
+    sysbench oltp_insert_bulk run --db-driver=mysql --mysql-db=dbtest --mysql-host=127.0.0.1 --mysql-port=4000 --mysql-user=root --tables=1 --table-size=10000 --time=360 --report-interval=2 --threads=5 --bulk-row-size=100  --auto-inc=off
 ```
 
 The above will build sysbench with MySQL support by default. If you have
-MySQL headers and libraries in non-standard locations (and no
+MySQL headers and libraries in .non-standard locations (and no
 `mysql_config` can be found in the `PATH`), you can specify them
 explicitly with `--with-mysql-includes` and `--with-mysql-libs` options
 to `./configure`.

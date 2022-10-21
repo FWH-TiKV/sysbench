@@ -39,9 +39,6 @@
 #include "sb_histogram.h"
 #include "sb_ck_pr.h"
 
-/* Query length limit for bulk insert queries */
-#define BULK_PACKET_SIZE (512*1024)
-
 /* How many rows to insert before COMMITs (used in bulk insert) */
 #define ROWS_BEFORE_COMMIT 1000
 
@@ -944,14 +941,21 @@ int db_bulk_insert_init(db_conn_t *con, const char *query, size_t query_len)
   }
 
   /* Allocate query buffer */
-  if (query_len + 1 > BULK_PACKET_SIZE)
+  unsigned long bulk_packet_size = sb_globals.bulk_row_size * 1500;
+  if (bulk_packet_size == 0)
+  {
+      log_text(LOG_FATAL,
+               "Bulk-row-size should be defined.");
+      return 1;
+  }
+  if (query_len + 1 > bulk_packet_size)
   {
     log_text(LOG_FATAL,
-             "Query length exceeds the maximum value (%u), aborting",
-             BULK_PACKET_SIZE);
+             "Query length exceeds the maximum value (%lu), aborting",
+             bulk_packet_size);
     return 1;
   }
-  con->bulk_buflen = BULK_PACKET_SIZE;
+  con->bulk_buflen = bulk_packet_size;
   con->bulk_buffer = (char *)malloc(con->bulk_buflen);
   if (con->bulk_buffer == NULL)
     return 1;
@@ -993,8 +997,13 @@ int db_bulk_insert_next(db_conn_t *con, const char *query, size_t query_len)
     Reserve space for '\0' and ',' (if not the first chunk in
     a bulk insert
   */
-  if (con->bulk_ptr + query_len + 1 + (con->bulk_cnt>0) > con->bulk_buflen)
+  if (con->bulk_ptr + query_len + 1 + (con->bulk_cnt>0) > con->bulk_buflen || con->bulk_cnt >= sb_globals.bulk_row_size)
   {
+      if (con->bulk_ptr + query_len + 1 + (con->bulk_cnt>0) > con->bulk_buflen) {
+         log_text(LOG_FATAL,
+                   "Bulk Buffer size(%u) is too small.",
+                   con->bulk_buflen);
+      }
     /* Is this a first row? */
     if (!con->bulk_cnt)
     {
@@ -1032,8 +1041,7 @@ static int db_bulk_do_insert(db_conn_t *con, int is_last)
       con->error != DB_ERROR_NONE)
     return 1;
 
-
-  if (con->bulk_commit_max != 0)
+    if (con->bulk_commit_max != 0)
   {
     con->bulk_commit_cnt += con->bulk_cnt;
 
