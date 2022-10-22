@@ -25,6 +25,7 @@ dist_pkgdata_SCRIPTS = bulk_insert.lua \
              oltp_update_index.lua \
              oltp_update_non_index.lua \
              oltp_write_only.lua\
+             oltp_insert_bulk.lua\
              select_random_points.lua \
              select_random_ranges.lua
 
