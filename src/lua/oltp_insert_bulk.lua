@@ -22,7 +22,7 @@
 require("oltp_common")
 
 cursize = sysbench.tid + 1
-line_number = 0
+line_number = 1
 
 sysbench.cmdline.commands.prepare = {
     function ()
